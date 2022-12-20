@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Services\" />
+    <None Remove="Services\Interfaces\" />
+    <None Remove="Newtonsoft.Json" />
+    <None Remove="Models\" />
+    <None Remove="Models\RawResponses\" />
+    <None Remove="Models\CleanedResults\" />
+    <None Remove="Models\RawResponses\CompanyFilingModels\" />
+    <None Remove="Data\" />
+    <None Remove="Data\Dao\" />
+    <None Remove="Data\Dao\Interfaces\" />
+    <None Remove="Models\CleanedResults\CompanyFilingModels\" />
+    <None Remove="Data\Enums\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Services\" />
+    <Folder Include="Services\Interfaces\" />
+    <Folder Include="Models\" />
+    <Folder Include="Models\RawResponses\" />
+    <Folder Include="Models\CleanedResults\" />
+    <Folder Include="Models\RawResponses\CompanyFilingModels\" />
+    <Folder Include="Data\" />
+    <Folder Include="Data\Dao\" />
+    <Folder Include="Data\Dao\Interfaces\" />
+    <Folder Include="Models\CleanedResults\CompanyFilingModels\" />
+    <Folder Include="Data\Enums\" />
+  </ItemGroup>
+</Project>
