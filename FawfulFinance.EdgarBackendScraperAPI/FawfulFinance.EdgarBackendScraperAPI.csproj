@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Include="AngleSharp" Version="0.17.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +25,7 @@
     <None Remove="Data\Dao\Interfaces\" />
     <None Remove="Models\CleanedResults\CompanyFilingModels\" />
     <None Remove="Data\Enums\" />
+    <None Remove="AngleSharp" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Services\" />

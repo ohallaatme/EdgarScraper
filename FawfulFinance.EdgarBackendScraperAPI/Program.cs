@@ -13,7 +13,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IEdgarDao, EdgarDao>();
 builder.Services.AddScoped<ICompanyFilingsService, CompanyFilingsService>();
-
+builder.Services.AddScoped<IReportingService, ReportingService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
