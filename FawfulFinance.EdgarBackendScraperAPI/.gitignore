@@ -13,6 +13,9 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+# Settings
+appsettings.json
+
 # Mono auto generated files
 mono_crash.*
 
@@ -191,9 +194,6 @@ publish/
 # checkin your Azure Web App publish settings, but sensitive information contained
 # in these scripts will be unencrypted
 PublishScripts/
-
-# Settings
-appsettings.json
 
 # NuGet Packages
 *.nupkg
