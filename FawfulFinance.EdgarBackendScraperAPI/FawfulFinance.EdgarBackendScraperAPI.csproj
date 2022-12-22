@@ -10,6 +10,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
     <PackageReference Include="AngleSharp" Version="0.17.1" />
+    <PackageReference Include="System.Xml.XDocument" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +27,10 @@
     <None Remove="Models\CleanedResults\CompanyFilingModels\" />
     <None Remove="Data\Enums\" />
     <None Remove="AngleSharp" />
+    <None Remove="Data\Files\" />
+    <None Remove="HtmlAgilityPack" />
+    <None Remove="Models\RawResponses\FilingUrlModels\" />
+    <None Remove="System.Xml.XDocument" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Services\" />
@@ -39,5 +44,7 @@
     <Folder Include="Data\Dao\Interfaces\" />
     <Folder Include="Models\CleanedResults\CompanyFilingModels\" />
     <Folder Include="Data\Enums\" />
+    <Folder Include="Data\Files\" />
+    <Folder Include="Models\RawResponses\FilingUrlModels\" />
   </ItemGroup>
 </Project>

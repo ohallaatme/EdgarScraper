@@ -27,12 +27,26 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Controllers
         {
             try
             {
-                string html = await _reportingService.GetTenKRawReport(cikNumber, reqReport);
-                return Ok(html);
+                await _reportingService.GetTenKRawReport(cikNumber, reqReport);
+                return Ok();
             }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                throw new Exception($"{ex.Message}, {ex.InnerException}");
+            }
+        }
+
+        [HttpGet("GetFinancials")]
+        public async Task<IActionResult> GetFinancials(string cikNumber, int reqReport)
+        {
+            try
+            {
+                await _reportingService.GetFinancialStatements(cikNumber, reqReport);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"{ex.Message}, {ex.InnerException}");
             }
         }
     }

@@ -41,6 +41,29 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Data.Dao
             string result = await response.Content.ReadAsStringAsync();
             return result;
         }
+
+        public async Task<Dictionary<string, string>> GetMasterReportUrls(string cikNumber, string filingNumber)
+        {
+            string url = string.Format(_filingUri, cikNumber, filingNumber);
+            string updatedUrl = ConvertRegUrlToFiling(url);
+
+            string base_url = updatedUrl.Replace("FilingSummary.xml", "");
+
+            using HttpResponseMessage response = await _client.GetAsync(updatedUrl);
+            string result = await response.Content.ReadAsStringAsync();
+
+            return new Dictionary<string, string>
+            {
+                {base_url, result}
+            };
+        }
+
+        private static string ConvertRegUrlToFiling(string url)
+        {
+            string updatedUrl = url.Replace("-", "");
+            return updatedUrl.Replace(".txt", "/FilingSummary.xml");
+
+        }
     }
 }
 
