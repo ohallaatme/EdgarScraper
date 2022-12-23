@@ -1,36 +1,28 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 using FawfulFinance.EdgarBackendScraperAPI.Data.Dao.Interfaces;
 using FawfulFinance.EdgarBackendScraperAPI.Models.CleanedResults.CompanyFilingModels;
 using FawfulFinance.EdgarBackendScraperAPI.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
 using AngleSharp;
-using Newtonsoft.Json;
 using FawfulFinance.EdgarBackendScraperAPI.Models.RawResponses.FilingUrlModels;
 using System.Xml.Linq;
 using FawfulFinance.EdgarBackendScraperAPI.Models.Requests.CoreFinancialStatements;
+using Newtonsoft.Json;
 
 namespace FawfulFinance.EdgarBackendScraperAPI.Services
 {
-    public class ReportingService : IReportingService
+    public class ReportUrlService : IReportUrlService
     {
         private readonly IEdgarDao _edgarDao;
         private readonly ICompanyFilingsService _companyFilingsService;
-        private HashSet<string> _financialStatements = new HashSet<string>
-        {
-            "balance sheet",
-            "income statement",
-            "cash flows",
-            "stockholders equity"
-        };
-        public ReportingService(IEdgarDao edgarDao,
+
+        public ReportUrlService(IEdgarDao edgarDao,
             ICompanyFilingsService companyFilingsService)
         {
             _edgarDao = edgarDao;
             _companyFilingsService = companyFilingsService;
         }
 
-        public async Task GetFinancialStatements(string cikNumber, int reportNo)
+        public async Task<string> GetFinancialStatements(string cikNumber, int reportNo)
         {
             List<FilingDetail> filings =
             await _companyFilingsService.GetReportFilings(cikNumber, "10-K");
@@ -79,9 +71,12 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Services
 
                 reportDocUrls.Add(info);
             }
+
+            StatementReqs reqs = await GetCoreFinancialReportUrls(reportDocUrls);
+            return JsonConvert.SerializeObject(reqs, Formatting.Indented);
         }
 
-        private async Task<StatementReqs> GetCoreFinancialReportUrls(List<ReportInfo> fullInfo)
+        private static async Task<StatementReqs> GetCoreFinancialReportUrls(List<ReportInfo> fullInfo)
         {
 
             if (fullInfo.Count == 0)
@@ -90,45 +85,84 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Services
             StatementReqs res = new StatementReqs();
 
             // Statements category should be consistent across companies, but keep an eye on
-            List<ReportInfo> statements = fullInfo.Where(r => r.Category == "Statements").ToList();
+            // adding Uncategorized from Amazon example
+            List<ReportInfo> statements = fullInfo
+                .Where(r => r.Category == "Statements" || r.Category == "Uncategorized")
+                .ToList();
 
+            await GetCashFlowsUrl(res, statements);
+            await GetBalanceSheetUrl(res, statements);
+            await GetIncomeStatementUrl(res, statements);
+            await GetStockholdersEquity(res, statements);
+
+            return res;
+        }
+
+        private static async Task GetCashFlowsUrl(StatementReqs res, List<ReportInfo> statements)
+        {
             List<ReportInfo> potentialCashFlow = statements.Where(r => r.NameShort
                 .ToLower()
                 .Contains("cash")).ToList();
-            List<ReportInfo> potentialBalanceSheets = statements.Where(r => r.NameShort
-                .ToLower()
-                .Contains("balance")).ToList();
-            List<ReportInfo> potentialIncomeStatement = statements.Where(r => r.NameShort
-                .ToLower()
-                .Contains("income")).ToList();
-            List<ReportInfo> potentialStockholdersEquity = statements.Where(r => r.NameShort
-                .ToLower()
-                .Contains("stockholder")).ToList();
 
             if (potentialCashFlow.Count == 1)
                 res.CashFlowsUrl = potentialCashFlow.First().Url;
             else if (potentialCashFlow.Count == 0)
                 res.CashFlowsUrl = "";
             else
-            {
-                // PICKUP 12.22.2022: Finish child method for finding each "most accurate" financial reporting URL, creating financial reporting scrapers
-                // and DAO methods. Consider moving this logic to separate get financial report URLs type service so it doesn't get too bulky and
-                // decouples properly
-            }
+                res.CashFlowsUrl = await GetMostApplicableUrl(potentialCashFlow, "cash flows");
+
         }
 
-        private async Task GetCashFlowsUrl()
+        private static async Task GetBalanceSheetUrl(StatementReqs res, List<ReportInfo> statements)
         {
+            List<ReportInfo> potentialBalanceSheets = statements.Where(r => r.NameShort
+                .ToLower()
+                .Contains("balance")).ToList();
 
+            if (potentialBalanceSheets.Count == 1)
+                res.BalanceSheetUrl = potentialBalanceSheets.First().Url;
+            else if (potentialBalanceSheets.Count == 0)
+                res.BalanceSheetUrl = "";
+            else
+                res.BalanceSheetUrl = await GetMostApplicableUrl(potentialBalanceSheets, "balance sheet");  
         }
 
-        private async Task<string> GetMostApplicableUrl(List<ReportInfo> potentialMatches, string comparison)
+        private static async Task GetIncomeStatementUrl(StatementReqs res, List<ReportInfo> statements)
+        {
+            List<ReportInfo> potentialIncomeStatement = statements.Where(r => r.NameShort
+                .ToLower()
+                .Contains("income")).ToList();
+
+
+            if (potentialIncomeStatement.Count == 1)
+                res.IncomeStatementUrl = potentialIncomeStatement.First().Url;
+            else if (potentialIncomeStatement.Count == 0)
+                res.IncomeStatementUrl = "";
+            else
+                res.IncomeStatementUrl = await GetMostApplicableUrl(potentialIncomeStatement, "income statement");
+        }
+
+        private static async Task GetStockholdersEquity(StatementReqs res, List<ReportInfo> statements)
+        {
+            List<ReportInfo> potentialStockholdersEquity = statements.Where(r => r.NameShort
+                .ToLower()
+                .Contains("stockholder")).ToList();
+
+            if (potentialStockholdersEquity.Count == 1)
+                res.StockholdersEquityUrl = potentialStockholdersEquity.First().Url;
+            else if (potentialStockholdersEquity.Count == 0)
+                res.StockholdersEquityUrl = "";
+            else
+                res.StockholdersEquityUrl = await GetMostApplicableUrl(potentialStockholdersEquity, "stockholders equity");
+        }
+
+        private static async Task<string> GetMostApplicableUrl(List<ReportInfo> potentialMatches, string comparison)
         {
 
             Dictionary<string, int> levRes = new Dictionary<string, int>();
             foreach (ReportInfo r in potentialMatches)
             {
-                int distance = await ComputeLevenshteinDistance(r.NameShort, "cash flows");
+                int distance = await ComputeLevenshteinDistance(r.NameShort.ToLower(), comparison);
                 levRes.Add(r.Url, distance);
             }
 

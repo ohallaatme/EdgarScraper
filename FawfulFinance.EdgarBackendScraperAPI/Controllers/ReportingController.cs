@@ -8,9 +8,9 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Controllers
     [Route("Reporting")]
     public class ReportingController : ControllerBase
     {
-        private IReportingService _reportingService;
+        private IReportUrlService _reportingService;
 
-        public ReportingController(IReportingService reportingService)
+        public ReportingController(IReportUrlService reportingService)
         {
             _reportingService = reportingService;
         }   
@@ -20,8 +20,8 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Controllers
         {
             try
             {
-                await _reportingService.GetFinancialStatements(cikNumber, reqReport);
-                return Ok();
+                string json = await _reportingService.GetFinancialStatements(cikNumber, reqReport);
+                return Ok(json);
             }
             catch (Exception ex)
             {
