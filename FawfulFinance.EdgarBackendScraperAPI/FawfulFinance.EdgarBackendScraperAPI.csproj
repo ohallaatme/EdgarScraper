@@ -31,6 +31,8 @@
     <None Remove="HtmlAgilityPack" />
     <None Remove="Models\RawResponses\FilingUrlModels\" />
     <None Remove="System.Xml.XDocument" />
+    <None Remove="Models\Requests\" />
+    <None Remove="Models\Requests\CoreFinanialStatements\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Services\" />
@@ -46,5 +48,7 @@
     <Folder Include="Data\Enums\" />
     <Folder Include="Data\Files\" />
     <Folder Include="Models\RawResponses\FilingUrlModels\" />
+    <Folder Include="Models\Requests\" />
+    <Folder Include="Models\Requests\CoreFinancialStatements\" />
   </ItemGroup>
 </Project>

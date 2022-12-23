@@ -8,6 +8,7 @@ using AngleSharp;
 using Newtonsoft.Json;
 using FawfulFinance.EdgarBackendScraperAPI.Models.RawResponses.FilingUrlModels;
 using System.Xml.Linq;
+using FawfulFinance.EdgarBackendScraperAPI.Models.Requests.CoreFinancialStatements;
 
 namespace FawfulFinance.EdgarBackendScraperAPI.Services
 {
@@ -15,53 +16,18 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Services
     {
         private readonly IEdgarDao _edgarDao;
         private readonly ICompanyFilingsService _companyFilingsService;
-        private readonly IFileWriterService _fileWriterService;
-
+        private HashSet<string> _financialStatements = new HashSet<string>
+        {
+            "balance sheet",
+            "income statement",
+            "cash flows",
+            "stockholders equity"
+        };
         public ReportingService(IEdgarDao edgarDao,
-            ICompanyFilingsService companyFilingsService,
-            IFileWriterService fileWriterService)
+            ICompanyFilingsService companyFilingsService)
         {
             _edgarDao = edgarDao;
             _companyFilingsService = companyFilingsService;
-            _fileWriterService = fileWriterService;
-        }
-
-        public async Task GetTenKRawReport(string cikNumber, int reportNo)
-        {
-            // first, get filings
-            List<FilingDetail> filings =
-                await _companyFilingsService.GetReportFilings(cikNumber, "10-K");
-
-            FilingDetail reqFiling = filings[reportNo];
-            string? filingNumber = reqFiling.AccessionNumber;
-
-            if (string.IsNullOrEmpty(filingNumber))
-                throw new Exception("The 10K requested does not exist");
-
-            string cikTrimmed = cikNumber.TrimStart(new char[] { '0' });
-            string html = await _edgarDao.GetReportRawText(cikTrimmed, filingNumber);
-
-            var config = Configuration.Default;
-            using var context = BrowsingContext.New(config);
-            using var doc = await context.OpenAsync(req => req.Content(html));
-
-            var rows = doc.QuerySelectorAll("tr");
-
-            StringBuilder sb = new StringBuilder();
-
-            foreach (var r in rows)
-            {
-                sb.Append(Convert.ToString(r.InnerHtml));
-                Console.WriteLine(r.InnerHtml);
-            }
-
-            string content = sb.ToString();
-            StringBuilder sbName = new StringBuilder(filingNumber);
-            sb.Append(".xml");
-            string fileName = sbName.ToString();
-
-            await _fileWriterService.WriteFile(fileName, content);
-            
         }
 
         public async Task GetFinancialStatements(string cikNumber, int reportNo)
@@ -113,8 +79,104 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Services
 
                 reportDocUrls.Add(info);
             }
+        }
 
+        private async Task<StatementReqs> GetCoreFinancialReportUrls(List<ReportInfo> fullInfo)
+        {
 
+            if (fullInfo.Count == 0)
+                throw new Exception("No reports available for this Company");
+
+            StatementReqs res = new StatementReqs();
+
+            // Statements category should be consistent across companies, but keep an eye on
+            List<ReportInfo> statements = fullInfo.Where(r => r.Category == "Statements").ToList();
+
+            List<ReportInfo> potentialCashFlow = statements.Where(r => r.NameShort
+                .ToLower()
+                .Contains("cash")).ToList();
+            List<ReportInfo> potentialBalanceSheets = statements.Where(r => r.NameShort
+                .ToLower()
+                .Contains("balance")).ToList();
+            List<ReportInfo> potentialIncomeStatement = statements.Where(r => r.NameShort
+                .ToLower()
+                .Contains("income")).ToList();
+            List<ReportInfo> potentialStockholdersEquity = statements.Where(r => r.NameShort
+                .ToLower()
+                .Contains("stockholder")).ToList();
+
+            if (potentialCashFlow.Count == 1)
+                res.CashFlowsUrl = potentialCashFlow.First().Url;
+            else if (potentialCashFlow.Count == 0)
+                res.CashFlowsUrl = "";
+            else
+            {
+                // PICKUP 12.22.2022: Finish child method for finding each "most accurate" financial reporting URL, creating financial reporting scrapers
+                // and DAO methods. Consider moving this logic to separate get financial report URLs type service so it doesn't get too bulky and
+                // decouples properly
+            }
+        }
+
+        private async Task GetCashFlowsUrl()
+        {
+
+        }
+
+        private async Task<string> GetMostApplicableUrl(List<ReportInfo> potentialMatches, string comparison)
+        {
+
+            Dictionary<string, int> levRes = new Dictionary<string, int>();
+            foreach (ReportInfo r in potentialMatches)
+            {
+                int distance = await ComputeLevenshteinDistance(r.NameShort, "cash flows");
+                levRes.Add(r.Url, distance);
+            }
+
+            int minVal = levRes.Values.Min();
+
+            return levRes.FirstOrDefault(x => x.Value == minVal).Key;
+
+        }
+
+        private static async Task<int> ComputeLevenshteinDistance(string stringOne, string stringTwo)
+        {
+            return await Task.Run(() =>
+            {
+                // n
+                int sOneLength = stringOne.Length;
+
+                // m
+                int sTwoLength = stringTwo.Length;
+
+                // 2D arrays require fewer allocations upon the managed heap and may be faster in this context
+                int[,] distance = new int[sOneLength + 1, sTwoLength + 1];
+
+                // guard clauses
+                if (sOneLength == 0)
+                    return sTwoLength;
+
+                if (sTwoLength == 0)
+                    return sOneLength;
+
+                // initialize arrays
+                for (int i = 0; i <= sOneLength; distance[i, 0] = i++)
+                { }
+                for (int j = 0; j <= sTwoLength; distance[0, j] = j++)
+                { }
+
+                for (int i = 1; i <= sOneLength; i++)
+                {
+                    for (int j=1; j <= sTwoLength; j++)
+                    {
+                        // compute cost
+                        int cost = (stringTwo[j - 1] == stringOne[i - 1]) ? 0 : 1;
+                        distance[i, j] = Math.Min(Math.Min(distance[i - 1, j] + 1,
+                        distance[i, j - 1] + 1),
+                        distance[i - 1, j - 1] + cost);
+                    }
+                }
+                return distance[sOneLength, sTwoLength];
+            });
         }
     }
 }
