@@ -22,7 +22,7 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Services
             _companyFilingsService = companyFilingsService;
         }
 
-        public async Task<string> GetFinancialStatements(string cikNumber, int reportNo)
+        public async Task<StatementReqs> GetCoreFinancialStatemenstUrls(string cikNumber, int reportNo)
         {
             List<FilingDetail> filings =
             await _companyFilingsService.GetReportFilings(cikNumber, "10-K");
@@ -73,7 +73,7 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Services
             }
 
             StatementReqs reqs = await GetCoreFinancialReportUrls(reportDocUrls);
-            return JsonConvert.SerializeObject(reqs, Formatting.Indented);
+            return reqs;
         }
 
         private static async Task<StatementReqs> GetCoreFinancialReportUrls(List<ReportInfo> fullInfo)
