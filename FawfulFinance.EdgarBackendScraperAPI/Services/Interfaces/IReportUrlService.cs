@@ -1,9 +1,11 @@
 ﻿using System;
+using FawfulFinance.EdgarBackendScraperAPI.Models.Requests.CoreFinancialStatements;
+
 namespace FawfulFinance.EdgarBackendScraperAPI.Services.Interfaces
 {
     public interface IReportUrlService
     {
-        public Task<string> GetFinancialStatements(string cikNumber, int reportNo);
+        public Task<StatementReqs> GetCoreFinancialStatemenstUrls(string cikNumber, int reportNo);
     }
-}
+}   
 

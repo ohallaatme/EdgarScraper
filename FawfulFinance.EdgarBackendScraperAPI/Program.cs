@@ -15,6 +15,8 @@ builder.Services.AddScoped<IEdgarDao, EdgarDao>();
 builder.Services.AddScoped<ICompanyFilingsService, CompanyFilingsService>();
 builder.Services.AddScoped<IFileWriterService, FileWriterService>();
 builder.Services.AddScoped<IReportUrlService, ReportUrlService>();
+builder.Services.AddScoped<IFinancialReportService, FinancialReportService>();
+builder.Services.AddScoped<IStatementTypeService, StatementTypeService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

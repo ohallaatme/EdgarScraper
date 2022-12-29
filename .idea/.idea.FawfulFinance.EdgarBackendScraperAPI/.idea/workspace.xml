@@ -5,7 +5,9 @@
     <projectFile profileName="IIS Express">FawfulFinance.EdgarBackendScraperAPI/FawfulFinance.EdgarBackendScraperAPI.csproj</projectFile>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1b0870af-c5eb-4adc-be46-50b897eb0fbe" name="Changes" comment="" />
+    <list default="true" id="1b0870af-c5eb-4adc-be46-50b897eb0fbe" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/FawfulFinance.EdgarBackendScraperAPI/Services/FinancialReportService.cs" beforeDir="false" afterPath="$PROJECT_DIR$/FawfulFinance.EdgarBackendScraperAPI/Services/FinancialReportService.cs" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -24,6 +26,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
+    "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -68,6 +71,7 @@
       <option name="presentableId" value="Default" />
       <updated>1671581709474</updated>
       <workItem from="1671581717784" duration="52000" />
+      <workItem from="1672347099146" duration="1219000" />
     </task>
     <servers />
   </component>

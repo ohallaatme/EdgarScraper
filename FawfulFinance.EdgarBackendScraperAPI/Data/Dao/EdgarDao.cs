@@ -42,6 +42,20 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Data.Dao
             return result;
         }
 
+        public async Task<string> GetFinancialStatement(string url)
+        {
+            try
+            {
+                using HttpResponseMessage response = await _client.GetAsync(url);
+                string result = await response.Content.ReadAsStringAsync();
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"{ex.Message}");
+            }
+        }
+
         public async Task<Dictionary<string, string>> GetMasterReportUrls(string cikNumber, string filingNumber)
         {
             string url = string.Format(_filingUri, cikNumber, filingNumber);
