@@ -6,6 +6,8 @@ using FawfulFinance.EdgarBackendScraperAPI.Models.Requests.CoreFinancialStatemen
 using FawfulFinance.EdgarBackendScraperAPI.Services.Interfaces;
 using Newtonsoft.Json;
 using System.Data;
+using AngleSharp.Dom;
+
 namespace FawfulFinance.EdgarBackendScraperAPI.Services
 {
     public class FinancialReportService : IFinancialReportService
@@ -55,92 +57,120 @@ namespace FawfulFinance.EdgarBackendScraperAPI.Services
 
             DataTable res = new DataTable();
 
-            for (int i=0; i < tableHeaders.Length; i++)
+            await AddTableCols(tableHeaders, res);
+            await PopulateTableValues(tableVals, res);
+
+            return res;
+        }
+
+        private async Task AddTableCols(IHtmlCollection<IElement> tableHeaders, DataTable res)
+        {
+            await Task.Run(() =>
             {
-                var innerHtml = tableHeaders[i].OuterHtml;
-                innerHtml = innerHtml.Replace("<br>", "");
-
-                XDocument xDoc = XDocument.Parse(innerHtml);
-
-                string? colName;
-
-                if (innerHtml.Contains("<strong>"))
+                for (int i=0; i < tableHeaders.Length; i++)
                 {
-                    colName = xDoc.Root.Element("div").Element("strong").Value ?? "";
-                    res.Columns.Add(colName);
-                }
-                else if (innerHtml.Contains("colspan"))
-                {
-                    var colSpan = xDoc.Root.Attribute("colspan").Value ?? "";
+                    var innerHtml = tableHeaders[i].OuterHtml;
+                    innerHtml = innerHtml.Replace("<br>", "");
 
-                    int? colSpanVal = Convert.ToInt32(colSpan);
+                    XDocument xDoc = XDocument.Parse(innerHtml);
 
-                    if (colSpanVal == 1)
+                    string? colName;
+
+                    if (innerHtml.Contains("<strong>"))
                     {
-                        colName = xDoc.Root.Element("th").Value ?? "";
+                        colName = xDoc.Root.Element("div").Element("strong").Value ?? "";
                         res.Columns.Add(colName);
                     }
-                }
-                else
-                {
-                    colName = xDoc.Root.Element("div").Value ?? "";
-                    res.Columns.Add(colName);
-                }
-            }
-
-            int leftPointer = 0;
-            int rightPointer = res.Columns.Count - 1;
-
-            while (rightPointer < tableVals.Length)
-            {
-                DataRow row = res.NewRow();
-                AngleSharp.Dom.IElement[] rowVals = tableVals.Skip(leftPointer).Take(res.Columns.Count).ToArray();
-                for (int i=0; i < rowVals.Length; i++)
-                {
-                    var outerHtml = rowVals[i].OuterHtml;
-                    string? val;
-
-                    if (outerHtml.Contains("&nbsp"))
-                    {   
-                        val = "";
-                        row[i] = val;
-                        // avoid xml parser error for empty values with the &nsbp value
-                        continue;
-                    }
-
-
-                    XDocument xDoc = XDocument.Parse(outerHtml);
-
-                    if (outerHtml.Contains("strong"))
+                    else if (innerHtml.Contains("colspan"))
                     {
-                        val = xDoc.Root.Element("a").Element("strong").Value ?? "";
-                    }
-                    // nump is the name of the value class with the #s
-                    else if (outerHtml.Contains("num"))
-                    {
-                        val = xDoc.Root.Value ?? "";
-                    }
-                    else if (outerHtml.Contains("text"))
-                    {
-                        // blank value
-                        val = "";
+                        var colSpan = xDoc.Root.Attribute("colspan").Value ?? "";
+
+                        int? colSpanVal = Convert.ToInt32(colSpan);
+
+                        if (colSpanVal == 1)
+                        {
+                            colName = xDoc.Root.Element("th").Value ?? "";
+                            res.Columns.Add(colName);
+                        }
                     }
                     else
                     {
-                        val = xDoc.Root.Element("a").Value ?? "";
+                        colName = xDoc.Root.Element("div").Value ?? "";
+                        res.Columns.Add(colName);
+                    }
+                }
+            });
+        }
+
+        private async Task PopulateTableValues(IHtmlCollection<IElement> tableVals, DataTable res)
+        {
+            await Task.Run(() =>
+            {
+                int leftPointer = 0;
+                int rightPointer = res.Columns.Count - 1;
+
+                while (rightPointer < tableVals.Length)
+                {
+                    DataRow row = res.NewRow();
+                    IElement[] rowVals = tableVals.Skip(leftPointer).Take(res.Columns.Count).ToArray();
+                    for (int i=0; i < rowVals.Length; i++)
+                    {
+                        var outerHtml = rowVals[i].OuterHtml;
+                        string? val;
+
+                        if (outerHtml.Contains("&nbsp"))
+                        {   
+                            val = "";
+                            row[i] = val;
+                            // avoid xml parser error for empty values with the &nsbp value
+                            continue;
+                        }
+
+
+                        XDocument xDoc = XDocument.Parse(outerHtml);
+
+                        if (outerHtml.Contains("strong"))
+                        {
+                            val = xDoc.Root.Element("a").Element("strong").Value ?? "";
+                        }
+                        // nump is the name of the value class with the #s
+                        else if (outerHtml.Contains("num"))
+                        {
+                            val = xDoc.Root.Value ?? "";
+                        }
+                        else if (outerHtml.Contains("text"))
+                        {
+                            // blank value
+                            val = "";
+                        }
+                        else
+                        {
+                            val = xDoc.Root.Element("a").Value ?? "";
+                        }
+
+                        row[i] = val;
                     }
 
-                    row[i] = val;
+                    res.Rows.Add(row);
+                    leftPointer = rightPointer + 1;
+                    rightPointer += res.Columns.Count;
                 }
-
-                res.Rows.Add(row);
-                leftPointer = rightPointer + 1;
-                rightPointer = rightPointer + res.Columns.Count;
-            }
-
-            return res;
+            });
 
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
